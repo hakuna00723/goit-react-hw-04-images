@@ -37,9 +37,9 @@ img {
 }
 
 /*
- * Стили компонента Searchbar
+ * Стили компонента SearchBar
  */
-.Searchbar {
+.SearchBar {
   top: 0;
   left: 0;
   position: sticky;

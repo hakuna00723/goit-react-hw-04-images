@@ -20,7 +20,7 @@ export function SearchBar({ onSubmit }) {
   };
 
   return (
-    <header className="Searchbar">
+    <header className="SearchBar">
       <form className="SearchForm" onSubmit={handleSubmit}>
         <button type="submit" className="SearchForm-button">
           <ImSearch size={25} />
