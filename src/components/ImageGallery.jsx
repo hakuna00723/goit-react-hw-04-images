@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
-import ImageGalleryItem from './ImageGalleryItem';
+import { ImageGalleryItem } from './ImageGalleryItem';
 
-const ImgGallery = ({ images }) => {
+export const ImgGallery = ({ images }) => {
   return (
     <ul className="ImageGallery">
       {images.map(image => (
@@ -14,5 +14,3 @@ const ImgGallery = ({ images }) => {
 ImgGallery.propTypes = {
   images: PropTypes.array.isRequired,
 };
-
-export default ImgGallery;

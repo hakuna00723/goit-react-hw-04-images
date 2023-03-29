@@ -1,78 +1,81 @@
-import { Component } from 'react';
-import Searchbar from './Searchbar';
-import ImgGallery from './ImageGallery';
-import Loader from './Loader';
-import Button from './Button';
-import fetchImages from '../services/api';
+import { useState, useEffect } from 'react';
+import { SearchBar } from './SearchBar';
+import { ImgGallery } from './ImageGallery';
+import { Loader } from './Loader';
+import { Button } from './Button';
+import { fetchImages } from '../services/api';
 
-export class App extends Component {
-  state = {
-    inputData: '',
-    images: [],
-    error: null,
-    status: 'idle',
-    page: 1,
-    isThisLastPage: false,
-    isLoading: false,
-    isMore: false,
+export const App = () => {
+  const [inputData, setInputData] = useState('');
+  const [images, setImages] = useState([]);
+  const [error, setError] = useState(null);
+  const [status, setStatus] = useState('idle');
+  const [page, setPage] = useState(1);
+  const [isThisLastPage, setIsThisLastPage] = useState(false);
+  const [prevInputData, setPrevInputData] = useState('');
+
+  const handleSubmit = inputData => {
+    setInputData(inputData);
+    setPage(1);
+    setStatus('idle');
   };
 
-  handleSubmit = inputData => {
-    this.setState({ inputData, page: 1 });
+  const onNextPage = () => {
+    setPage(page + 1);
   };
 
-  onNextPage = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
-  };
-
-  cutImg = imgInfo => {
+  const cutImg = imgInfo => {
     return imgInfo.map(({ id, webformatURL, largeImageURL }) => {
       return { id, webformatURL, largeImageURL };
     });
   };
 
-  async componentDidUpdate(_, prevState) {
-    const { inputData, page } = this.state;
+  useEffect(() => {
+    const loadImages = async (inputData, page) => {
+      if (!inputData) {
+        return;
+      }
 
-    if (prevState.inputData === inputData && prevState.page === page) {
+      try {
+        setStatus('pending');
+        const response = await fetchImages(inputData, page);
+        const newImages = cutImg(response.hits);
+        setImages(images => [...images, ...newImages]);
+        setStatus('resolved');
+        setIsThisLastPage(Math.ceil(response.total / 12) <= page);
+
+        if (newImages.length === 0) {
+          alert(
+            `Sorry, there are no images matching your search ${inputData}. Please try again.`
+          );
+        }
+      } catch (error) {
+        setError(error);
+        setStatus('rejected');
+      }
+    };
+
+    console.log('page', page);
+    console.log('inputData', inputData);
+
+    if (prevInputData !== inputData) {
+      setPage(1);
+      setImages([]);
+      setPrevInputData(inputData);
       return;
     }
 
-    try {
-      this.setState({ status: 'pending' });
-      const response = await fetchImages(inputData, page);
-      const newImages = this.cutImg(response.hits);
-      const isThisLastPage = Math.ceil(response.total / 12) <= page;
-      this.setState(prevState => ({
-        images: [...prevState.images, ...newImages],
-        status: 'resolved',
-        isThisLastPage,
-      }));
+    loadImages(inputData, page);
+  }, [page, inputData, prevInputData, error]);
 
-      if (newImages.length === 0) {
-        alert(
-          `Sorry, there are no images matching your search ${inputData}. Please try again.`
-        );
-      }
-    } catch (error) {
-      this.setState({ error, status: 'rejected' });
-    }
-  }
-
-  render() {
-    const { status, isThisLastPage, images } = this.state;
-
-    return (
-      <div className="App">
-        <Searchbar onSubmit={this.handleSubmit} />
-        <ImgGallery onNextPage={this.onNextPage} images={images} />
-        {status === 'pending' && <Loader />}
-        {status !== 'idle' && !isThisLastPage && (
-          <Button onClick={this.onNextPage} status={status} />
-        )}
-      </div>
-    );
-  }
-}
+  return (
+    <div className="App">
+      <SearchBar onSubmit={handleSubmit} />
+      <ImgGallery onNextPage={onNextPage} images={images} />
+      {status === 'pending' && <Loader />}
+      {status !== 'idle' && !isThisLastPage && (
+        <Button onClick={onNextPage} status={status} />
+      )}
+    </div>
+  );
+};
