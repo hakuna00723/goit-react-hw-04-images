@@ -8,27 +8,9 @@ import { fetchImages } from '../services/api';
 export const App = () => {
   const [inputData, setInputData] = useState('');
   const [images, setImages] = useState([]);
-  const [error, setError] = useState(null);
   const [status, setStatus] = useState('idle');
   const [page, setPage] = useState(1);
   const [isThisLastPage, setIsThisLastPage] = useState(false);
-  const [prevInputData, setPrevInputData] = useState('');
-
-  const handleSubmit = inputData => {
-    setInputData(inputData);
-    setPage(1);
-    setStatus('idle');
-  };
-
-  const onNextPage = () => {
-    setPage(page + 1);
-  };
-
-  const cutImg = imgInfo => {
-    return imgInfo.map(({ id, webformatURL, largeImageURL }) => {
-      return { id, webformatURL, largeImageURL };
-    });
-  };
 
   useEffect(() => {
     const loadImages = async (inputData, page) => {
@@ -50,23 +32,29 @@ export const App = () => {
           );
         }
       } catch (error) {
-        setError(error);
         setStatus('rejected');
       }
     };
 
-    console.log('page', page);
-    console.log('inputData', inputData);
-
-    if (prevInputData !== inputData) {
-      setPage(1);
-      setImages([]);
-      setPrevInputData(inputData);
-      return;
-    }
-
     loadImages(inputData, page);
-  }, [page, inputData, prevInputData, error]);
+  }, [inputData, page]);
+
+  const handleSubmit = inputData => {
+    setInputData(inputData);
+    setPage(1);
+    setStatus('idle');
+    setImages([]);
+  };
+
+  const onNextPage = () => {
+    setPage(prevState => prevState + 1);
+  };
+
+  const cutImg = imgInfo => {
+    return imgInfo.map(({ id, webformatURL, largeImageURL }) => {
+      return { id, webformatURL, largeImageURL };
+    });
+  };
 
   return (
     <div className="App">
